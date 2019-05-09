@@ -1,0 +1,1 @@
+cmd_/home/aiganym/Desktop/project/expirement/ex1.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -T ./scripts/module-common.lds  --build-id  -o /home/aiganym/Desktop/project/expirement/ex1.ko /home/aiganym/Desktop/project/expirement/ex1.o /home/aiganym/Desktop/project/expirement/ex1.mod.o ;  true

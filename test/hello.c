@@ -13,7 +13,10 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 
-#define BUFF_SIZE 40
+#include <linux/slab.h>
+#include <linux/gfp.h>
+
+#define BUFF_SIZE PAGE_SIZE
 
 struct packet_info {
     struct work_struct work;
@@ -24,7 +27,7 @@ struct packet_info {
 
 static struct nf_hook_ops hook_ops;
 static struct workqueue_struct *wq;
-static char buff[BUFF_SIZE];
+static char *buff;
  
 static void wq_func(struct work_struct *work) {
     struct packet_info *packet_info;
@@ -72,7 +75,7 @@ static unsigned int hook_func(void* priv, struct sk_buff *skb, const struct nf_h
 
 int init_module(void) {
     int retval;
-
+    buff = (char*) kmalloc(BUFF_SIZE, GFP_KERNEL);
     wq = create_workqueue("my work queue");
 
     hook_ops.hook = hook_func;
