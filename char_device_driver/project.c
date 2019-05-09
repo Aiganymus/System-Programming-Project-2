@@ -7,6 +7,8 @@
 #define DEVICE_NAME "my_device"
 
 struct virtual_device {
+    struct scull_qset *data;
+    struct semaphore sem;
     char data[100];
     struct cdev cdev; // character device structure
 } my_dev;
@@ -20,6 +22,11 @@ struct virtual_device {
 //     struct semaphore sem; /* mutual exclusion semaphore */
 //     struct cdev cdev; /* Char device structure */
 // };
+
+struct scull_qset {
+ void **data;
+ struct scull_qset *next;
+};
 
 dev_t dev; // holds device numbers: major and minor
 int major_num, minor_num = 0;

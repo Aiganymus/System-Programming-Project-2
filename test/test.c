@@ -4,6 +4,7 @@
 #include <linux/syscalls.h>
 #include <linux/fcntl.h>
 #include <asm/uaccess.h>
+#include <asm/page.h>
 
 struct file *filehandle1;
 char buff[10];
@@ -55,7 +56,6 @@ int file_read(struct file* file, unsigned long long offset, unsigned char* data,
 int init_module(void)
 {
 	printk(KERN_ALERT "Hello!\n");
-
 	filehandle1 = file_open("/dev/my_device0", 1, 0);
 	file_write((struct file*)filehandle1, 0, "hello", 5);
 	file_close((struct file*)filehandle1);
