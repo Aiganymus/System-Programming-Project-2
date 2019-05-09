@@ -1,4 +1,4 @@
-obj-m += net_driver.o
+obj-m += test.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
