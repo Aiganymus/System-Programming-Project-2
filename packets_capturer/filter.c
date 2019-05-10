@@ -16,6 +16,8 @@
 #include <linux/slab.h>
 #include <linux/gfp.h>
 
+#include "../fops.h"
+
 #define BUFF_SIZE PAGE_SIZE
 
 struct packet_info {
@@ -97,5 +99,5 @@ void cleanup_module(void)
 }
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Aiganym");
+MODULE_AUTHOR("Aiganym Zhandaulet");
 MODULE_DESCRIPTION("Module for capturing network packets and writing them to char device.");
