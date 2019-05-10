@@ -47,21 +47,29 @@ ssize_t dev_write(struct file *filp, const char *buff, size_t len, loff_t *offse
         if (down_interruptible(&my_dev.sem))
                 return -ERESTARTSYS;
 
-        while (strlen(my_dev.buffer) != 0) { /* no space to write */
-                up(&my_dev.sem); /* release the lock */
-                if (filp->f_flags & O_NONBLOCK)
-                        return -EAGAIN;
-                if (wait_event_interruptible(my_dev.outq, (strlen(my_dev.buffer) == 0)))
-                        return -ERESTARTSYS; 
-                if (down_interruptible(&my_dev.sem))
-                        return -ERESTARTSYS;
+        // while (strlen(my_dev.buffer) != 0) { /* no space to write */
+        //         up(&my_dev.sem); /* release the lock */
+        //         if (filp->f_flags & O_NONBLOCK)
+        //                 return -EAGAIN;
+        //         if (wait_event_interruptible(my_dev.outq, (strlen(my_dev.buffer) == 0)))
+        //                 return -ERESTARTSYS; 
+        //         if (down_interruptible(&my_dev.sem))
+        //                 return -ERESTARTSYS;
+        // }
+        kfree(my_dev.buffer);
+        my_dev.buffer = (char*) kmalloc(my_dev.buffersize, GFP_KERNEL);
+        if (!my_dev.buffer) {
+                printk(KERN_ERR "Can't allocate memory to buffer!\n");
+                return -ENOMEM;
         }
+        my_dev.buffer[0] = '\0';
 
         /* copy from buffer to device */
         memcpy(my_dev.buffer, buff, len);
         my_dev.buffer[len]='\0';
+
         if (strlen(my_dev.buffer)) { 
-                printk(KERN_DEBUG "WRITING: Received %zu characters \'%s\'.\n", len, my_dev.buffer);
+                printk(KERN_DEBUG "WRITING: Received %zu characters.\n", len);
         } else {
                 printk(KERN_ERR "Failed to write %zu characters!\n", len);
                 up (&my_dev.sem);
@@ -93,11 +101,11 @@ ssize_t dev_read(struct file *filp, char *buff, size_t len, loff_t *offset)
         }
 
         /* copy from device to buffer */
-        memcpy(buff, my_dev.buffer, len);
-        buff[len]='\0';
+        memcpy(buff, my_dev.buffer, strlen(my_dev.buffer));
+        buff[strlen(my_dev.buffer)]='\0';
 
         if (strlen(buff)) { 
-                printk(KERN_DEBUG "READING: Sent %zu characters \'%s\'.\n", len, buff);
+                printk(KERN_DEBUG "READING: Sent %zu characters.\n", len);
         } else {
                 printk(KERN_ERR "Failed to read %zu characters!\n", len);
                 up (&my_dev.sem);
