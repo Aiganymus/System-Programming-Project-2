@@ -18,14 +18,20 @@ int init_module(void)
 	printk(KERN_ALERT "Hello!\n");
 	// char user[3] = "xyz";
 	buffer = (char*) kmalloc(PAGE_SIZE, GFP_KERNEL);
-	sprintf(buffer, "%s", "");
+	// sprintf(buffer, "%s", "");
+	buffer[0] = '\0';
 
 	size_t len = strlen(buffer);
 	printk(KERN_INFO "size: %zu", len);
 
 	char *user = (char*) kmalloc(PAGE_SIZE, GFP_KERNEL);
-	sprintf(user, "%s", "Addr:35.224.99.156,Port:80,Type:6");
-	sprintf(buffer, "%s", user);
+	user = "Addr:35.224.99.156,Port:80,Type:6";
+	memcpy(buffer, user, strlen(user));
+	buffer[strlen(user)]='\0';
+
+	// sprintf(user, "%s", "Addr:35.224.99.156,Port:80,Type:6");
+	// sprintf(buffer, "%s", user);
+
 	printk(KERN_INFO "%s", buffer);
 	len = strlen(buffer);
 	printk(KERN_INFO "size: %zu", len);
