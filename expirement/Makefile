@@ -1,4 +1,4 @@
-obj-m += ex5.o
+obj-m += thread.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

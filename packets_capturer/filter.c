@@ -32,7 +32,6 @@ static struct nf_hook_ops hook_ops;
 static struct workqueue_struct *wq;
 static char *buff;
 static struct kfifo fifo;
-static bool done = false;
 struct file *file;
 
 void write_data(void) 
@@ -49,8 +48,6 @@ void write_data(void)
                 kfree(packet_info);
         }
         kfifo_reset(&fifo);
-        // if (printk_ratelimit()) 
-        //         printk(KERN_INFO "buffer: %s\n", buff);
 
         file = file_open("/dev/my_device0", 1);
         file_write(file, buff, strlen(buff));
@@ -58,7 +55,6 @@ void write_data(void)
 
         buff = (char*) kmalloc(BUFF_SIZE, GFP_KERNEL);
         buff[0] = '\0';
-        // done = true;
 }
 
 static void wq_func(struct work_struct *work) 
@@ -66,11 +62,10 @@ static void wq_func(struct work_struct *work)
         struct packet_info *packet_info;
         packet_info = (struct packet_info*) work;
 
-        if (!done) {
-                if (kfifo_size(&fifo)-kfifo_len(&fifo) < sizeof(struct packet_info))
-                        write_data();
-                kfifo_in(&fifo, packet_info, sizeof(struct packet_info));
-        }
+        
+        if (kfifo_size(&fifo)-kfifo_len(&fifo) < sizeof(struct packet_info))
+                write_data();
+        kfifo_in(&fifo, packet_info, sizeof(struct packet_info));
 }
 
 static unsigned int hook_func(void* priv, struct sk_buff *skb, const struct nf_hook_state* state)

@@ -13,7 +13,7 @@
 #define BUFF_SIZE PAGE_SIZE
 
 struct virtual_device {
-        wait_queue_head_t inq, outq; /* read and write queues */
+        wait_queue_head_t inq; /* read and write queues */
         int nreaders, nwriters; /* number of openings for r/w */
         int buffersize; 
         struct semaphore sem;
@@ -47,15 +47,6 @@ ssize_t dev_write(struct file *filp, const char *buff, size_t len, loff_t *offse
         if (down_interruptible(&my_dev.sem))
                 return -ERESTARTSYS;
 
-        // while (strlen(my_dev.buffer) != 0) { /* no space to write */
-        //         up(&my_dev.sem); /* release the lock */
-        //         if (filp->f_flags & O_NONBLOCK)
-        //                 return -EAGAIN;
-        //         if (wait_event_interruptible(my_dev.outq, (strlen(my_dev.buffer) == 0)))
-        //                 return -ERESTARTSYS; 
-        //         if (down_interruptible(&my_dev.sem))
-        //                 return -ERESTARTSYS;
-        // }
         kfree(my_dev.buffer);
         my_dev.buffer = (char*) kmalloc(my_dev.buffersize, GFP_KERNEL);
         if (!my_dev.buffer) {
@@ -85,6 +76,7 @@ ssize_t dev_write(struct file *filp, const char *buff, size_t len, loff_t *offse
 
 ssize_t dev_read(struct file *filp, char *buff, size_t len, loff_t *offset) 
 {
+        size_t size;
         printk(KERN_DEBUG "READING: FROM CHAR DEVICE!\n");
 
         if (down_interruptible(&my_dev.sem))
@@ -101,13 +93,14 @@ ssize_t dev_read(struct file *filp, char *buff, size_t len, loff_t *offset)
         }
 
         /* copy from device to buffer */
-        memcpy(buff, my_dev.buffer, strlen(my_dev.buffer));
-        buff[strlen(my_dev.buffer)]='\0';
+        size = strlen(my_dev.buffer);
+        memcpy(buff, my_dev.buffer, size);
+        buff[size]='\0';
 
         if (strlen(buff)) { 
-                printk(KERN_DEBUG "READING: Sent %zu characters.\n", len);
+                printk(KERN_DEBUG "READING: Sent %zu characters.\n", size);
         } else {
-                printk(KERN_ERR "Failed to read %zu characters!\n", len);
+                printk(KERN_ERR "Failed to read %zu characters!\n", size);
                 up (&my_dev.sem);
                 return -EFAULT;
         }
@@ -122,8 +115,6 @@ ssize_t dev_read(struct file *filp, char *buff, size_t len, loff_t *offset)
         my_dev.buffer[0] = '\0';
         up (&my_dev.sem);
 
-        /* awake any writers and return */
-        wake_up_interruptible(&my_dev.outq);
         return len;
 }
 
@@ -152,7 +143,6 @@ struct file_operations fops = {
 int setup_device(void) 
 {
         init_waitqueue_head(&(my_dev.inq));
-        init_waitqueue_head(&(my_dev.outq));
         sema_init(&my_dev.sem, 1);
 
         /* allocate memory to buffer */
